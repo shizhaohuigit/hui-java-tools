@@ -1,3 +1,4 @@
+import {extraMeta,initExtras} from './extras.js';
 import {formatJson,timestampToDate,dateToTimestamp,cronNext} from './core.js';
 import cronstrue from 'cronstrue/i18n';
 import {DateTime} from 'luxon';
@@ -5,11 +6,12 @@ const $=id=>document.getElementById(id);
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let toastTimer;function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,2600);}
 async function copy(text){if(!text){toast('没有可复制的内容');return;}try{await navigator.clipboard.writeText(text);toast('已复制到剪贴板');}catch{toast('浏览器未允许复制，请选中文本手动复制');}}
-const meta={json:['JSON 格式化','把复杂的数据，整理成清晰的结构。','DATA, MADE READABLE','{ }'],timestamp:['时间戳工具','每一个时间点，都有准确的表达。','TIME, WITHOUT GUESSWORK','◷'],cron:['Cron 表达式','把执行计划，变成看得见的下一次。','SCHEDULE, WITH CONFIDENCE','▦'],regex:['正则表达式','让文本里的规律，清晰可见。','PATTERNS, MADE VISIBLE','.*']};
+const meta={json:['JSON 格式化','把复杂的数据，整理成清晰的结构。','DATA, MADE READABLE','{ }'],timestamp:['时间戳工具','每一个时间点，都有准确的表达。','TIME, WITHOUT GUESSWORK','◷'],cron:['Cron 表达式','把执行计划，变成看得见的下一次。','SCHEDULE, WITH CONFIDENCE','▦'],...extraMeta,regex:['正则表达式','让文本里的规律，清晰可见。','PATTERNS, MADE VISIBLE','.*']};
+initExtras(copy);
 function activate(tab){if(!meta[tab])tab='json';document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab);b.setAttribute('aria-current',b.dataset.tab===tab?'page':'false');});document.querySelectorAll('.tool-panel').forEach(p=>p.hidden=p.id!==`panel-${tab}`);const [title,desc,eyebrow,mark]=meta[tab];$('page-title').innerHTML=escape(title)+'<span class="title-dot">.</span>';$('page-desc').textContent=desc;$('eyebrow').textContent=eyebrow;$('crumb').textContent=title;$('heading-mark').textContent=mark;document.title=`${title} · Hui.dev 开发工具箱`;}
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{location.hash=b.dataset.tab;}));window.addEventListener('hashchange',()=>activate(location.hash.slice(1)));activate(location.hash.slice(1));
 $('theme-toggle').onclick=()=>{document.documentElement.classList.toggle('dark');$('theme-toggle').setAttribute('aria-label',document.documentElement.classList.contains('dark')?'切换浅色主题':'切换深色主题');};
-document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();const tab=location.hash.slice(1)||'json';({json:jsonFormat,timestamp:convertTimestamp,cron:runCron,regex:runRegex}[tab]||jsonFormat)();}if(e.altKey&&/^[1-4]$/.test(e.key)){e.preventDefault();location.hash=Object.keys(meta)[Number(e.key)-1];}});
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();const tab=location.hash.slice(1)||'json';const action={json:jsonFormat,timestamp:convertTimestamp,cron:runCron,regex:runRegex}[tab];if(action)action();else $(`${tab}-run`)?.click();}if(e.altKey&&/^[1-4]$/.test(e.key)){e.preventDefault();location.hash=['json','timestamp','cron','regex'][Number(e.key)-1];}});
 const example='{"project":"Hui.dev","description":"给开发日常减一点负担","version":1,"ready":true,"userId":9223372036854775807,"tools":[{"name":"JSON 格式化","local":true},{"name":"时间戳转换","local":true},{"name":"Cron 表达式","local":true},{"name":"正则表达式","local":true}],"settings":{"theme":"light","timezone":"Asia/Shanghai"}}';
 let jsonOutput='';function jsonStatus(text,error=false){$('json-status').textContent=(error?'✕  ':'✓  ')+text;$('json-status').classList.toggle('error',error);}
 function inputMeta(){$('json-input-meta').textContent=`${$('json-input').value.length.toLocaleString()} 字符`;}

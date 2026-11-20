@@ -19,3 +19,14 @@
 - 正则采用 JavaScript RegExp，并非 Java Pattern。Web Worker 超过 1.5 秒中止，显示前 1000 个匹配。
 - JSON 输入限 2 MB；正则文本限 200000 字符。日期转换对重复和不存在的夏令时时段给出错误。
 - 暂不持久化用户输入，也无账户或服务端业务逻辑。
+
+## v1.1 新增工具
+
+- 文本 / JSON 差异对比（JSON 大整数保真、可忽略字段顺序）
+- Base64、URL、Unicode、Java 字符串编码转义
+- 批量文本去重、排序、集合运算、SQL IN、JSON 数组
+- MySQL、PostgreSQL、Oracle、SQL Server、SQLite 格式化
+- MyBatis Preparing / Parameters 单组日志还原（MySQL 默认字符串规则）
+- JWT Header / Payload 查看、UTC 时间与过期提示（不验证签名）
+
+所有输入只保留在页面内存中，无上传、持久化或外部 API 调用。新增库随页面打包，不依赖第三方 CDN。
