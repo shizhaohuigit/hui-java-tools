@@ -1,0 +1,12 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {formatJson,timestampToDate,dateToTimestamp,cronNext} from '../src/core.js';
+test('JSON preserves Java Long, decimals and scientific notation',()=>{const src='{"id":9223372036854775807,"price":2.370,"big":2.3e+500}';assert.equal(formatJson(src,0),src);});
+test('JSON safe key sorting, nested arrays, and null',()=>{assert.equal(formatJson('{"z":[{"b":1,"a":null}],"__proto__":2}',0,true),'{"__proto__":2,"z":[{"a":null,"b":1}]}');});
+test('JSON rejects syntax errors and duplicate keys',()=>{assert.throws(()=>formatJson('{"a":}'));assert.throws(()=>formatJson('{"a":1,"a":2}'));});
+test('epoch and milliseconds timezone conversion',()=>{assert.equal(timestampToDate('0','s','Asia/Shanghai').local,'1970-01-01 08:00:00.000');assert.equal(timestampToDate('-1','ms','UTC').milliseconds,-1);assert.equal(dateToTimestamp('2024-01-01 08:00:00','Asia/Shanghai').seconds,1704067200);});
+test('invalid dates, DST gaps and ambiguous times rejected',()=>{for(const d of ['2025-02-29 00:00:00','2026-13-01 00:00:00'])assert.throws(()=>dateToTimestamp(d,'UTC'));assert.throws(()=>dateToTimestamp('2026-03-08 02:30:00','America/New_York'));assert.throws(()=>dateToTimestamp('2026-11-01 01:30:00','America/New_York'));});
+test('Spring weekday schedule uses Monday=1',()=>{const r=cronNext('0 0 9 ? * MON-FRI','spring','Asia/Shanghai',new Date('2026-11-20T02:00:00Z'),2);assert.match(r.dates[0],/^2026-11-23 09:00:00/);});
+test('Unix five fields and month end',()=>{assert.match(cronNext('*/5 * * * *','unix','UTC',new Date('2026-11-20T00:01:00Z'),1).dates[0],/^2026-11-20 00:05:00/);assert.match(cronNext('0 0 0 L * ?','spring','UTC',new Date('2026-11-20T00:00:00Z'),1).dates[0],/^2026-11-30/);});
+test('Cron rejects unsupported dialects and invalid ranges',()=>{for(const e of ['0 0 0 * * * *','0 99 0 * * ?','0 0 0 1W * ?','0 0 0 1 * MON'])assert.throws(()=>cronNext(e,'spring','UTC'));});
+test('weekday names including WED remain valid',()=>{assert.match(cronNext('0 0 9 * * WED','spring','UTC',new Date('2026-11-20T00:00:00Z'),1).dates[0],/^2026-11-25/);});
